@@ -16,13 +16,13 @@ public abstract class Player extends Character {
         float dx = 0;
         float dy = 0;
 
-        // เช็ค WASD
+        // check WASD
         if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += 1;
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += 1;
 
-        // สั่งเดินตามทิศทางที่กด
+        // move follwe WASD
         if (dx != 0 || dy != 0) {
             move(dx, dy, delta);
         }
