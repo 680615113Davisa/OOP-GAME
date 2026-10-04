@@ -9,9 +9,11 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class Dragon extends Player {
     private Texture spriteSheet;
-    private Animation<TextureRegion> walkAnimation; // แอนิเมชันเดิน (เฟรม 1-4)
-    private Animation<TextureRegion> fireAnimation; // แอนิเมชันพ่นไฟ (เฟรม 5-16)
+    private Animation<TextureRegion> walkAnimation; // แอนิเมชันเดิน (วงสีเขียว: 4 เฟรมแรก)
+    private Animation<TextureRegion> fireAnimation; // แอนิเมชันพ่นไฟ (วงสีแดง: 3 เฟรมแรกของแถวล่าง)
     private float stateTime;
+    private float fireTimer = 0f;          // นับเวลาการพ่นไฟ
+    private final float FIRE_DURATION = 2.0f; // พ่นค้างไว้ 2 วินาที (คูลดาวน์/ระยะเวลาท่าทาง)
 
     private boolean isBreathing = false;
     private boolean facingRight = true;
@@ -21,7 +23,6 @@ public class Dragon extends Player {
 
         spriteSheet = new Texture("Dragon.png");
 
-        // * สำคัญ: ปรับขนาด 64, 64 ให้ตรงกับขนาดพิกเซลจริงของแต่ละช่องในรูป Dragon.png ของคุณ *
         int frameWidth = 64;
         int frameHeight = 64;
         TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
@@ -37,15 +38,15 @@ public class Dragon extends Player {
             }
         }
 
-        // 1. ตัดแบ่งช่วงที่ 1: เฟรมที่ 1 ถึง 4 (index 0 ถึง 3) สำหรับเดินปกติ
+        // 1. วงสีเขียว: เฟรมที่ 1 ถึง 4 (index 0-3) สำหรับเดินปกติ
         TextureRegion[] walkFrames = new TextureRegion[4];
         System.arraycopy(allFrames, 0, walkFrames, 0, 4);
         walkAnimation = new Animation<>(0.12f, walkFrames);
 
-        // 2. ตัดแบ่งช่วงที่ 2: เฟรมที่ 5 ถึง 16 (index 4 ถึง 15) สำหรับพ่นไฟ
-        TextureRegion[] fireFrames = new TextureRegion[7];
-        System.arraycopy(allFrames, 4, fireFrames, 0, 7);
-        fireAnimation = new Animation<>(0.08f, fireFrames); // เล่นไวขึ้นนิดนึงตอนพ่นไฟ
+        // 2. วงสีแดง: แถวล่าง 3 ตัวแรก (index 8 ถึง 10 ในอาเรย์รวม เนื่องจากขึ้นแถวใหม่ที่ index 8) สำหรับพ่นไฟ
+        TextureRegion[] fireFrames = new TextureRegion[3];
+        System.arraycopy(allFrames, 8, fireFrames, 0, 3);
+        fireAnimation = new Animation<>(0.15f, fireFrames);
 
         stateTime = 0f;
     }
@@ -53,6 +54,14 @@ public class Dragon extends Player {
     @Override
     public void handleInput(float delta) {
         super.handleInput(delta); // จัดการการเคลื่อนไหว WASD
+
+        // นับถอยหลังเวลาพ่นไฟ
+        if (fireTimer > 0) {
+            fireTimer -= delta;
+            isBreathing = true;
+        } else {
+            isBreathing = false;
+        }
 
         // เช็คการหันซ้าย-ขวา
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -62,18 +71,18 @@ public class Dragon extends Player {
             facingRight = true;
         }
 
-        // กดปุ่ม E ค้างไว้เพื่อเปลี่ยนเป็นท่าพ่นไฟ (เฟรม 5-16)
-        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-            isBreathing = true;
-            attack();
-        } else {
-            isBreathing = false;
+        // คลิกซ้ายเพื่อพ่นไฟ (ถ้าหมดเวลาคูลดาวน์ 2 วินาทีแล้วถึงจะกดพ่นใหม่ได้)
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            if (fireTimer <= 0) {
+                fireTimer = FIRE_DURATION; // ตั้งเวลาพ่นค้างไว้ 2 วินาที
+                attack();
+            }
         }
     }
 
     @Override
     public void attack() {
-        System.out.println("🔥 Dragon breathes fire!");
+        System.out.println(" Dragon breathes fire! (Cooldown 2s)");
     }
 
     @Override
@@ -82,10 +91,8 @@ public class Dragon extends Player {
 
         TextureRegion currentFrame;
         if (isBreathing) {
-            // ถ้ากด E ให้เล่นแอนิเมชันพ่นไฟ (เฟรม 5-16)
             currentFrame = fireAnimation.getKeyFrame(stateTime, true);
         } else {
-            // ถ้าไม่ได้กด ให้เล่นแอนิเมชันเดินปกติ (เฟรม 1-4)
             currentFrame = walkAnimation.getKeyFrame(stateTime, true);
         }
 
@@ -96,6 +103,10 @@ public class Dragon extends Player {
             currentFrame.flip(true, false);
         }
 
-        batch.draw(currentFrame, x, y);
+        // ขยายขนาดมังกรเพิ่มขึ้น 3 เท่า (64 * 3 = 192 พิกเซล)
+        float drawWidth = 64 * 3f;
+        float drawHeight = 64 * 3f;
+        batch.draw(currentFrame, x, y, drawWidth, drawHeight);
     }
 }
+
