@@ -82,7 +82,7 @@ public class Dragon extends Player {
 
     @Override
     public void attack() {
-        System.out.println(" Dragon breathes fire! (Cooldown 2s)");
+        System.out.println("🔥 Dragon breathes fire! (Cooldown 2s)");
     }
 
     @Override
@@ -103,10 +103,9 @@ public class Dragon extends Player {
             currentFrame.flip(true, false);
         }
 
-        // ขยายขนาดมังกรเพิ่มขึ้น 3 เท่า (64 * 3 = 192 พิกเซล)
-        float drawWidth = 64 * 3f;
-        float drawHeight = 64 * 3f;
+
+        float drawWidth = 128 ;
+        float drawHeight = 128 ;
         batch.draw(currentFrame, x, y, drawWidth, drawHeight);
     }
 }
-
