@@ -2,24 +2,24 @@ package com.game.oop;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-
+// Base class for all collectible items in the game
 public abstract class Item {
     protected float x, y;
     protected Texture texture;
     protected boolean isCollected = false;
-
+    // Constructor Sets position and loads the image
     public Item(float x, float y, String texturePath) {
         this.x = x;
         this.y = y;
-        this.texture = new Texture(texturePath); // ต้องมีรูปไอเทมใน assets
+        this.texture = new Texture(texturePath); //
     }
-
+    // Draws the item on the screen only if it hasn't been collected
     public void draw(SpriteBatch batch) {
         if (!isCollected) {
             batch.draw(texture, x, y);
         }
     }
-
+    // Returns the current collected status
     public boolean isCollected() {
         return isCollected;
     }

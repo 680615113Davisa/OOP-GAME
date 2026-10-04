@@ -42,7 +42,7 @@ public abstract class Character {
         return health > 0;
     }
 
-
+//Draws the character's texture on the screen at its current X and Y coordinates
     public void draw(SpriteBatch batch) {
         batch.draw(texture, x, y);
     }
