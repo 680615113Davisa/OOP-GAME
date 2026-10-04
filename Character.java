@@ -1,52 +1,55 @@
 package com.game.oop;
 
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 
-public abstract class Character {
-    // data of charactor
-    protected String name;
-    protected float x, y;          // location
-    protected int health;          // current blood
-    protected int maxHealth;       // max blood
-    protected float speed;         // speed run
-    protected Texture texture;     // picture of character
+public abstract class Player extends Character {
+    // (Coins)
+    protected int coins = 0;
 
-    // Constructor begin
-    public Character(String name, float x, float y, int health, float speed, String texturePath) {
-        this.name = name;
-        this.x = x;
-        this.y = y;
-        this.health = health;
-        this.maxHealth = health;
-        this.speed = speed;
-        this.texture = new Texture(texturePath); // dowload picture
+    public Player(float x, float y, int health, float speed, String texturePath) {
+        super("Player", x, y, health, speed, texturePath); // เพิ่มคำว่า "Player" เข้าไปเป็นตัวแรกสุดครับ
     }
+    // control button
+    public void handleInput(float delta) {
+        float dx = 0;
+        float dy = 0;
 
-    // movement
-    public void move(float dx, float dy, float delta) {
-        x += dx * speed * delta;
-        y += dy * speed * delta;
-    }
+        // เช็ค WASD
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += 1;
 
-    //when attack hp decrease
-    public void takeDamage(int damage) {
-        health -= damage;
-        if (health < 0) {
-            health = 0;
+        // follow WASD
+        if (dx != 0 || dy != 0) {
+            move(dx, dy, delta);
+        }
+
+        // left for attack
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            attack();
         }
     }
 
-    // check alive
-    public boolean isAlive() {
-        return health > 0;
+
+    // method for health
+    public void heal(int amount) {
+        this.health += amount;
+        if (this.health > this.maxHealth) {
+            this.health = this.maxHealth; // not more than MAX
+        }
+        System.out.println("get health potion : " + this.health);
     }
 
-
-    public void draw(SpriteBatch batch) {
-        batch.draw(texture, x, y);
+    // Method for get coin
+    public void addCoins(int amount) {
+        this.coins += amount;
+        System.out.println("get coin coin: " + this.coins);
     }
 
-
-    public abstract void attack();
+    // Getter for show coin UI
+    public int getCoins() {
+        return coins;
+    }
 }
