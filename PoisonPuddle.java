@@ -7,7 +7,8 @@ public class PoisonPuddle {
     private float x, y;
     private Texture texture;
     private float duration = 5.0f;
-    private float radius = 30f;
+    private float radius = 60f;
+
     // Constructor Sets position and loads the image
     public PoisonPuddle(float x, float y) {
         this.x = x;
@@ -29,7 +30,7 @@ public class PoisonPuddle {
     }
     // Draws the puddle on the screen at 40x40 size
     public void draw(SpriteBatch batch) {
-        batch.draw(texture, x, y, 40, 40);
+        batch.draw(texture, x, y, 100, 100);
     }
     // Clears the image from memory to prevent memory leaks
     public void dispose() {

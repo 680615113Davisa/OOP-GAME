@@ -140,7 +140,7 @@ public class LiquidCat extends Player {
             currentFrame = walkAnimation.getKeyFrame(stateTime, true);
         }
 
-        batch.draw(currentFrame, x, y);
+        batch.draw(currentFrame, x, y,64,64);
     }
 
     public boolean isLiquid() {

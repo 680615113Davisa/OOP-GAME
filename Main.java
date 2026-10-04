@@ -3,6 +3,7 @@ package com.game.oop;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import java.util.ArrayList;
@@ -10,19 +11,16 @@ import java.util.List;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
-
-
     private Player player;
     private List<Item> worldItems;
-
-
+    private Texture background;
     private boolean isPlaying = false;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
         worldItems = new ArrayList<>();
-
+        background = new Texture("backgroundoop.png");
     }
 
     @Override
@@ -30,7 +28,6 @@ public class Main extends ApplicationAdapter {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
         if (!isPlaying) {
-
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
                 player = new LiquidCat(200, 200);
                 isPlaying = true;
@@ -41,20 +38,20 @@ public class Main extends ApplicationAdapter {
                 System.out.println("Started as Dragon");
             }
         } else {
-
             float delta = Gdx.graphics.getDeltaTime();
 
 
             player.handleInput(delta);
 
             batch.begin();
-            player.draw(batch);
 
+            batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+            player.draw(batch);
 
             if (player instanceof LiquidCat) {
                 ((LiquidCat) player).updateAndDrawPuddles(batch, delta, null);
             }
-
 
             for (int i = worldItems.size() - 1; i >= 0; i--) {
                 Item item = worldItems.get(i);
@@ -76,5 +73,6 @@ public class Main extends ApplicationAdapter {
     @Override
     public void dispose() {
         batch.dispose();
+        background.dispose();
     }
 }
