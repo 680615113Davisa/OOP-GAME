@@ -49,4 +49,10 @@ public abstract class Character {
 
 
     public abstract void attack();
+
+    public void dispose() {
+        if (texture != null) {
+            texture.dispose();
+        }
+    }
 }

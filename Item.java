@@ -16,7 +16,7 @@ public abstract class Item {
     // Draws the item on the screen only if it hasn't been collected
     public void draw(SpriteBatch batch) {
         if (!isCollected) {
-            batch.draw(texture, x, y);
+            batch.draw(texture, x,y);
         }
     }
     // Returns the current collected status

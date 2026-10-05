@@ -13,13 +13,18 @@ public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private Player player;
     private List<Item> worldItems;
+    private List<Monster> monsterList;
     private Texture background;
+
+    private float spawnTimer = 0f;
+    private final float SPAWN_INTERVAL = 5.0f;
     private boolean isPlaying = false;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
         worldItems = new ArrayList<>();
+        monsterList = new ArrayList<>();
         background = new Texture("backgroundoop.png");
     }
 
@@ -41,6 +46,29 @@ public class Main extends ApplicationAdapter {
             float delta = Gdx.graphics.getDeltaTime();
 
 
+            spawnTimer += delta;
+            if (spawnTimer >= SPAWN_INTERVAL) {
+                float screenW = Gdx.graphics.getWidth();
+                float screenH = Gdx.graphics.getHeight();
+
+
+                int side = (int) (Math.random() * 4);
+                switch (side) {
+                    case 0: monsterList.add(new Scorpion((float) (Math.random() * screenW), screenH + 50));
+                        break;
+                    case 1:
+                        monsterList.add(new Scorpion((float) (Math.random() * screenW), -50));
+                        break;
+                    case 2:
+                        monsterList.add(new Scorpion(-50, (float) (Math.random() * screenH)));
+                        break;
+                    case 3:
+                        monsterList.add(new Scorpion(screenW + 50, (float) (Math.random() * screenH)));
+                        break;
+                }
+
+                spawnTimer = 0f;
+            }
             player.handleInput(delta);
 
             batch.begin();
@@ -50,7 +78,22 @@ public class Main extends ApplicationAdapter {
             player.draw(batch);
 
             if (player instanceof LiquidCat) {
-                ((LiquidCat) player).updateAndDrawPuddles(batch, delta, null);
+                ((LiquidCat) player).updateAndDrawPuddles(batch, delta, monsterList);
+            }
+
+            for (int i = monsterList.size() - 1; i >= 0; i--) {
+                Monster monster = monsterList.get(i);
+
+                if (monster instanceof Scorpion) {
+                    ((Scorpion) monster).update(delta, player, worldItems);
+                }
+
+                monster.draw(batch);
+
+                if (!monster.isAlive()) {
+                    monster.dispose();
+                    monsterList.remove(i);
+                }
             }
 
             for (int i = worldItems.size() - 1; i >= 0; i--) {
@@ -66,6 +109,7 @@ public class Main extends ApplicationAdapter {
                     worldItems.remove(i);
                 }
             }
+
             batch.end();
         }
     }
@@ -74,5 +118,8 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         batch.dispose();
         background.dispose();
+        for (Monster monster : monsterList) {
+            monster.dispose();
+        }
     }
 }
