@@ -1,37 +1,31 @@
 package com.game.oop;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.utils.ScreenUtils;
 
-/** Playable scene using four-direction animations and backgroundplay.png. */
-public class Soldier extends ApplicationAdapter {
-    private static final int FRAME_SIZE = 64;
-    private static final int CHARACTER_SIZE = FRAME_SIZE * 2;
-    private static final float MOVE_SPEED = 200f;
+/** The playable soldier character. */
+public class Soldier extends Player {
+    private static final int CHARACTER_SIZE = 100;
 
-    private SpriteBatch batch;
-    private Texture background;
     private final Texture[] characterTextures = new Texture[16];
-    private Animation<TextureRegion> backAnimation;
-    private Animation<TextureRegion> frontAnimation;
-    private Animation<TextureRegion> leftAnimation;
-    private Animation<TextureRegion> rightAnimation;
+    private final Animation<TextureRegion> backAnimation;
+    private final Animation<TextureRegion> frontAnimation;
+    private final Animation<TextureRegion> leftAnimation;
+    private final Animation<TextureRegion> rightAnimation;
     private Animation<TextureRegion> currentAnimation;
-    private float x = 200f;
-    private float y = 200f;
     private float animationTime;
 
-    @Override
-    public void create() {
-        batch = new SpriteBatch();
-        background = new Texture("backgroundplay.png");
+    public Soldier() {
+        this(200f, 200f);
+    }
 
+    public Soldier(float x, float y) {
+        super(x, y, 100, 200f,
+            "Resprite_exports/Front/Front_0000.png");
         backAnimation = loadAnimation("Back", 0);
         frontAnimation = loadAnimation("Front", 4);
         leftAnimation = loadAnimation("Left", 8);
@@ -43,31 +37,20 @@ public class Soldier extends ApplicationAdapter {
         TextureRegion[] frames = new TextureRegion[4];
         for (int i = 0; i < frames.length; i++) {
             String path = "Resprite_exports/" + direction + "/" + direction + "_000" + i + ".png";
-            Texture texture = new Texture(path);
-            characterTextures[textureOffset + i] = texture;
-            frames[i] = new TextureRegion(texture);
+            Texture frameTexture = new Texture(path);
+            characterTextures[textureOffset + i] = frameTexture;
+            frames[i] = new TextureRegion(frameTexture);
         }
         return new Animation<>(0.12f, frames);
     }
 
-    @Override
-    public void render() {
-        float delta = Gdx.graphics.getDeltaTime();
-        float dx = 0f;
-        float dy = 0f;
-
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) dx -= 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) dx += 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) dy -= 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) dy += 1f;
-
+    public void update(float dx, float dy, float delta, float screenWidth, float screenHeight) {
         boolean moving = dx != 0f || dy != 0f;
         if (moving) {
             float length = (float) Math.sqrt(dx * dx + dy * dy);
-            x += dx / length * MOVE_SPEED * delta;
-            y += dy / length * MOVE_SPEED * delta;
+            move(dx / length, dy / length, delta);
 
-            Animation<TextureRegion> nextAnimation = currentAnimation;
+            Animation<TextureRegion> nextAnimation;
             if (Math.abs(dx) > Math.abs(dy)) {
                 nextAnimation = dx < 0f ? leftAnimation : rightAnimation;
             } else {
@@ -79,25 +62,3 @@ public class Soldier extends ApplicationAdapter {
             }
             animationTime += delta;
         }
-
-        x = Math.max(0f, Math.min(x, Gdx.graphics.getWidth() - CHARACTER_SIZE));
-        y = Math.max(0f, Math.min(y, Gdx.graphics.getHeight() - CHARACTER_SIZE));
-
-        TextureRegion frame = currentAnimation.getKeyFrame(moving ? animationTime : 0f, true);
-
-        ScreenUtils.clear(0f, 0f, 0f, 1f);
-        batch.begin();
-        batch.draw(background, 0f, 0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        batch.draw(frame, x, y, CHARACTER_SIZE, CHARACTER_SIZE);
-        batch.end();
-    }
-
-    @Override
-    public void dispose() {
-        batch.dispose();
-        background.dispose();
-        for (Texture texture : characterTextures) {
-            if (texture != null) texture.dispose();
-        }
-    }
-}
