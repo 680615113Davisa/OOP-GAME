@@ -1,5 +1,4 @@
 package Item;
-
 import Characters.Player;
 
 public class Coin extends Item {
@@ -10,7 +9,7 @@ public class Coin extends Item {
     @Override
     public void applyEffect(Player player) {
         player.addCoin(1);
-        this.isCollected = true; //
+        this.isCollected = true;
         System.out.println("Coins!");
     }
 }

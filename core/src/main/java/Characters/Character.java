@@ -1,18 +1,15 @@
 package Characters;
-
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public abstract class Character {
-    // data of charactor
     protected String name;
-    protected float x, y;          // location
-    protected int health;          // current blood
-    protected int maxHealth;       // max blood
-    protected float speed;         // speed run
-    protected Texture texture;     // picture of character
+    protected float x, y;
+    protected int health;
+    protected int maxHealth;
+    protected float speed;
+    protected Texture texture;
 
-    // Constructor begin
     public Character(String name, float x, float y, int health, float speed, String texturePath) {
         this.name = name;
         this.x = x;
@@ -20,32 +17,19 @@ public abstract class Character {
         this.health = health;
         this.maxHealth = health;
         this.speed = speed;
-        this.texture = new Texture(texturePath); // dowload picture
+        this.texture = new Texture(texturePath);
     }
 
-    public float getX() {
-        return x;
-    }
+    public float getX() { return x; }
+    public void setX(float x) { this.x = x; }
+    public float getY() { return y; }
+    public void setY(float y) { this.y = y; }
 
-    public void setX(float x) {
-        this.x = x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public void setY(float y) {
-        this.y = y;
-    }
-
-    // movement
     public void move(float dx, float dy, float delta) {
         x += dx * speed * delta;
         y += dy * speed * delta;
     }
 
-    //when attack hp decrease
     public void takeDamage(int damage) {
         health -= damage;
         if (health < 0) {
@@ -53,16 +37,19 @@ public abstract class Character {
         }
     }
 
-    // check alive
     public boolean isAlive() {
         return health > 0;
     }
-
 
     public void draw(SpriteBatch batch) {
         batch.draw(texture, x, y);
     }
 
-
     public abstract void attack();
+
+    public void dispose() {
+        if (texture != null) {
+            texture.dispose();
+        }
+    }
 }

@@ -1,26 +1,18 @@
 package Characters;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
-import java.util.ArrayList;
 import java.util.List;
-import com.badlogic.gdx.math.Rectangle;
 
 public abstract class Player extends Character {
-
     protected int coinScore = 0;
     protected float mapWidth, mapHeight;
 
     public Player(float x, float y, int health, float speed, String texturePath) {
         super("Player", x, y, health, speed, texturePath);
-    }
-
-    public abstract void update(float delta, ArrayList<Monster> activeMonsters);
-
-    public int getCoinScore() {
-        return coinScore;
+        this.health = health;
+        this.maxHealth = health;
     }
 
     public void setMapBounds(float width, float height) {
@@ -28,35 +20,35 @@ public abstract class Player extends Character {
         this.mapHeight = height;
     }
 
-    public void handleInput(float delta, ArrayList<Monster> activeMonsters) {
+    public void handleInput(float delta) {
         float dx = 0;
         float dy = 0;
 
-        // เช็กปุ่มเดิน
         if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += 1;
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += 1;
 
-        // --- เพิ่มบรรทัดนี้ลงไป เพื่อสั่งให้ตัวละครเดินตามทิศทางที่กด ---
-        move(dx, dy, delta);
+        float offsetRight = 70f;
+        float offsetTop = 70f;
 
-        // สั่งให้ตัวละครโจมตี
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+        if (this.x < 0) this.x = 0;
+        if (this.y < 0) this.y = 0;
 
-            // สร้างกล่องโจมตี (Attack Box) ขนาด 100x100 ครอบรอบตัวผู้เล่น
-            Rectangle attackBox = new Rectangle(this.x - 25, this.y - 25, 100, 100);
-
-            attack(); // เรียกเผื่อคลาสลูกเอาไปเล่น Animation ตอนฟัน
+        if (this.x > mapWidth - offsetRight) {
+            this.x = mapWidth - offsetRight;
         }
-    }
+        if (this.y > mapHeight - offsetTop) {
+            this.y = mapHeight - offsetTop;
+        }
 
-    public float getCenterX() {
-        return this.x + 32f;
-    }
+        if (dx != 0 || dy != 0) {
+            move(dx, dy, delta);
+        }
 
-    public float getCenterY() {
-        return this.y + 32f;
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            attack();
+        }
     }
 
     public abstract void attack();
@@ -74,8 +66,9 @@ public abstract class Player extends Character {
         System.out.println("HP: " + this.health);
     }
 
-    public void update(SpriteBatch batch, float delta, List<Monster> monsters) {
-    }
+    public float getCenterX() { return this.x + 32f; }
+    public float getCenterY() { return this.y + 32f; }
+    public int getCoinScore() { return coinScore; }
 
     public Rectangle getHitbox() {
         return new Rectangle(this.x, this.y, 64, 64);

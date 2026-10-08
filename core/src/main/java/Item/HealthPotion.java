@@ -1,5 +1,4 @@
 package Item;
-
 import Characters.Player;
 
 public class HealthPotion extends Item {
@@ -9,7 +8,7 @@ public class HealthPotion extends Item {
 
     @Override
     public void applyEffect(Player player) {
-        player.heal(20); // restore blood health
+        player.heal(20);
         this.isCollected = true;
         System.out.println("Blood health!");
     }

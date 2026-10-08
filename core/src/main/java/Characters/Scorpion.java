@@ -1,83 +1,69 @@
 package Characters;
-
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import java.nio.channels.FileLock;
+import Item.Item;
+import java.util.List;
+import java.util.Random;
 
 public class Scorpion extends Monster {
-
-    // ประกาศตัวแปรสำหรับทำ Animation
-    private Animation<TextureRegion> walkAnimation;
-    private float stateTime = 0f;
+    private Texture spriteSheet;
+    private Animation<TextureRegion> animation;
+    private float stateTime;
 
     public Scorpion(float x, float y) {
-        super("Scorpion", x, y, 80, 200f, "Scorpion.png");
+        super("Scorpion", x, y, 50, 100f, "Scorpion.png");
+        spriteSheet = new Texture("Scorpion.png");
 
-        // --- ลอจิกการทำหลายเฟรม (Animation) ---
-        Texture spriteSheet = new Texture("Scorpion.png");
-
-        // ⚠️ สำคัญ: เปลี่ยนเลข 4 ให้เป็น "จำนวนคอลัมน์" (จำนวนช่อง) ตามภาพแมงป่องของคุณจริงๆ
-        int columns = 4;
-
-        int frameWidth = spriteSheet.getWidth() / columns;
-        int frameHeight = spriteSheet.getHeight(); // สมมติว่ามีแค่ 1 แถว
-
-        // หั่นภาพตามความกว้างและสูง
+        int frameWidth = spriteSheet.getWidth() / 4;
+        int frameHeight = spriteSheet.getHeight();
         TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
-
-        // เอาภาพที่หั่นแล้วมาใส่ใน Array 1 มิติ
-        TextureRegion[] walkFrames = new TextureRegion[columns];
-        for (int i = 0; i < columns; i++) {
-            walkFrames[i] = tmp[0][i];
+        TextureRegion[] frames = new TextureRegion[tmp[0].length];
+        for (int i = 0; i < tmp[0].length; i++) {
+            frames[i] = tmp[0][i];
         }
+        animation = new Animation<>(0.15f, frames);
+        stateTime = 0f;
 
-        // สร้าง Animation (0.1f คือความเร็วในการสลับภาพ ยิ่งน้อยยิ่งสลับไว)
-        walkAnimation = new Animation<>(0.1f, walkFrames);
+        Random rand = new Random();
+        this.attackTimer = rand.nextFloat();
     }
 
     @Override
-    public void update(float delta, Player player) {
-        chase(player, delta);
-
-        if (isNearPlayer(player)) {
-            attack(player);
-        }
+    public void attack() {
     }
 
-    private boolean isNearPlayer(Player player) {
-        float dx = player.getX() - this.getX();
-        float dy = player.getY() - this.getY();
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        return this.getHitbox().overlaps(player.getHitbox());
+    @Override
+    public void update(float delta, Player player, List<Item> worldItems) {
+        stateTime += delta;
+        updatePoison(delta, worldItems);
+
+        float targetX = player.getCenterX() - 32f;
+        float targetY = player.getCenterY() - 32f;
+
+        if (this.x < targetX) this.x += speed * delta;
+        if (this.x > targetX) this.x -= speed * delta;
+        if (this.y < targetY) this.y += speed * delta;
+        if (this.y > targetY) this.y -= speed * delta;
     }
 
-    private void chase(Player player, float delta) {
-        moveTowards(player.getX(), player.getY(), delta);
-    }
-
-    public void attack(Player player) {
-        System.out.println("Scorpion ต่อย! ผู้เล่นติดพิษ!");
-        player.takeDamage(5);
-    }
-
-    // --- เขียนทับเมธอด draw เพื่อแสดงผลแบบแอนิเมชัน ---
     @Override
     public void draw(SpriteBatch batch) {
-        // นับเวลาที่ผ่านไปเพื่อบอกว่าตอนนี้ควรแสดงเฟรมไหน
-        stateTime += Gdx.graphics.getDeltaTime();
-
-        // ดึงภาพเฟรมปัจจุบัน (true = ให้เล่นวนซ้ำไปเรื่อยๆ)
-        TextureRegion currentFrame = walkAnimation.getKeyFrame(stateTime, true);
-
-        // วาดแมงป่องลงจอ (คุณสามารถแก้เลข 64, 64 เป็นขนาดพิกเซลที่ต้องการให้แสดงผลได้)
+        TextureRegion currentFrame = animation.getKeyFrame(stateTime, true);
         batch.draw(currentFrame, x, y, 64, 64);
     }
+
     public Rectangle getHitbox() {
         return new Rectangle(this.x, this.y, 64, 64);
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (spriteSheet != null) {
+            spriteSheet.dispose();
+        }
+    }
 }
