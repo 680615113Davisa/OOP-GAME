@@ -2,10 +2,8 @@ package com.game.oop;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.GdxRuntimeException;
@@ -23,7 +21,6 @@ public class CharacterSelectScreen {
     private final Texture characterHeader;
     private final Texture selectButton;
     private final SpriteBatch batch;
-    private final BitmapFont font;
     private final CharacterSelectedListener listener;
     private final Texture[] portraitTextures = new Texture[4];
     private final TextureRegion[] portraits = new TextureRegion[4];
@@ -34,7 +31,6 @@ public class CharacterSelectScreen {
         characterHeader = new Texture("Character.png");
         selectButton = new Texture("selecticon.png");
         batch = new SpriteBatch();
-        font = new BitmapFont();
         portraitTextures[0] = loadTextureFromZip("liquidcat.zip", "Catli2.png");
         portraits[0] = firstFrame(portraitTextures[0], 8, 3);
         portraitTextures[1] = new Texture("Dragon.png");
@@ -99,13 +95,10 @@ public class CharacterSelectScreen {
         batch.draw(background, 0f, 0f, screenWidth, screenHeight);
         batch.draw(characterHeader, screenWidth * 0.32f, screenHeight * 0.77f,
             screenWidth * 0.36f, screenHeight * 0.13f);
-        font.setColor(Color.WHITE);
         drawChoice(batch, 0, centersX[0], portraitY, selectY, portraitSize);
         drawChoice(batch, 1, centersX[1], portraitY, selectY, portraitSize);
         drawChoice(batch, 2, centersX[2], portraitY, selectY, portraitSize);
         drawChoice(batch, 3, centersX[3], portraitY, selectY, portraitSize);
-        font.getData().setScale(1f);
-        font.draw(batch, "Press 1-4 or click a character", screenWidth * 0.34f, screenHeight * 0.14f);
         batch.end();
 
     }
@@ -167,7 +160,6 @@ public class CharacterSelectScreen {
         characterHeader.dispose();
         selectButton.dispose();
         batch.dispose();
-        font.dispose();
         for (Texture texture : portraitTextures) {
             if (texture != null) texture.dispose();
         }
