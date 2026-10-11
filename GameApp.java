@@ -26,7 +26,9 @@ public class GameApp extends ApplicationAdapter {
     public void create() {
         batch = new SpriteBatch();
         background = new Texture("backgroundplay.png");
-        startScreen = new StartScreen(() -> choosingCharacter = true);
+        // The first run always starts as Liquid Cat. Character selection is
+        // shown only after that run ends.
+        startScreen = new StartScreen(() -> startGame("Liquid Cat"));
         characterSelectScreen = new CharacterSelectScreen(this::startGame);
     }
 
@@ -43,6 +45,14 @@ public class GameApp extends ApplicationAdapter {
 
         float delta = Gdx.graphics.getDeltaTime();
         player.handleInput(delta);
+
+        if (!player.isAlive()) {
+            player.dispose();
+            player = null;
+            gameStarted = false;
+            choosingCharacter = true;
+            return;
+        }
 
         ScreenUtils.clear(0f, 0f, 0f, 1f);
         batch.begin();
@@ -79,6 +89,7 @@ public class GameApp extends ApplicationAdapter {
                 player = new LiquidCat(200f, 200f);
                 break;
         }
+        choosingCharacter = false;
         gameStarted = true;
     }
 
