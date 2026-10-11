@@ -41,7 +41,6 @@ public class Soldier extends Player {
     private float pickupAnimationTime;
     private float pickupSpawnTime;
     private boolean initialPickupsSpawned;
-    private int nextPickupType;
     private int bonusDamage;
 
     public Soldier() {
@@ -151,22 +150,16 @@ public class Soldier extends Player {
 
     private void updatePickups(float delta, float screenWidth, float screenHeight) {
         if (!initialPickupsSpawned) {
-            addPickup(getX() + CHARACTER_SIZE + 24f, getY() + 24f, PickupType.COIN, screenWidth, screenHeight);
-            addPickup(getX() - PICKUP_SIZE - 24f, getY() + CHARACTER_SIZE - PICKUP_SIZE,
-                PickupType.POTION, screenWidth, screenHeight);
-            addPickup(getX() + 30f, getY() + CHARACTER_SIZE + 24f,
-                PickupType.POST_IT, screenWidth, screenHeight);
+            for (int i = 0; i < PickupType.values().length; i++) {
+                spawnRandomPickup(screenWidth, screenHeight);
+            }
             initialPickupsSpawned = true;
         }
 
         pickupSpawnTime += delta;
         if (pickupSpawnTime >= 5f) {
-            pickupSpawnTime = 0f;
-            float pickupX = MathUtils.random(0f, Math.max(0f, screenWidth - PICKUP_SIZE));
-            float pickupY = MathUtils.random(0f, Math.max(0f, screenHeight - PICKUP_SIZE));
-            PickupType type = PickupType.values()[nextPickupType];
-            addPickup(pickupX, pickupY, type, screenWidth, screenHeight);
-            nextPickupType = (nextPickupType + 1) % PickupType.values().length;
+            pickupSpawnTime -= 5f;
+            spawnRandomPickup(screenWidth, screenHeight);
         }
 
         for (int i = pickups.size() - 1; i >= 0; i--) {
@@ -178,11 +171,13 @@ public class Soldier extends Player {
         }
     }
 
-    private void addPickup(float pickupX, float pickupY, PickupType type,
-                           float screenWidth, float screenHeight) {
+    private void spawnRandomPickup(float screenWidth, float screenHeight) {
         float maxX = Math.max(0f, screenWidth - PICKUP_SIZE);
         float maxY = Math.max(0f, screenHeight - PICKUP_SIZE);
-        pickups.add(new Pickup(clamp(pickupX, 0f, maxX), clamp(pickupY, 0f, maxY), type));
+        float pickupX = MathUtils.random(0f, maxX);
+        float pickupY = MathUtils.random(0f, maxY);
+        PickupType type = PickupType.values()[MathUtils.random(PickupType.values().length - 1)];
+        pickups.add(new Pickup(pickupX, pickupY, type));
     }
 
     private boolean isTouching(Pickup pickup) {
@@ -195,6 +190,13 @@ public class Soldier extends Player {
         pickup.type.collect(this);
     }
 
+    /** Adds the damage bonus when this Soldier picks up a post-it. */
+    private void collectPostIt() {
+        bonusDamage += POST_IT_DAMAGE_BONUS;
+        System.out.println("Post-it collected! Attack damage: " + getAttackDamage());
+    }
+
+    /** Returns base damage plus all post-it bonuses collected this run. */
     public int getAttackDamage() {
         return BASE_ATTACK_DAMAGE + bonusDamage;
     }
@@ -325,8 +327,7 @@ public class Soldier extends Player {
         POST_IT {
             @Override
             void collect(Soldier soldier) {
-                soldier.bonusDamage += POST_IT_DAMAGE_BONUS;
-                System.out.println("Post-it collected! Attack damage: " + soldier.getAttackDamage());
+                soldier.collectPostIt();
             }
         };
 
@@ -345,3 +346,4 @@ public class Soldier extends Player {
         }
     }
 }
+
