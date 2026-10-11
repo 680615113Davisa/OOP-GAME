@@ -14,19 +14,16 @@ public class Dragon extends Player {
     private float stateTime;
     private float fireTimer = 0f;
     private final float FIRE_DURATION = 2.0f;
-
     private boolean isBreathing = false;
     private boolean facingRight = true;
 
     public Dragon(float x, float y) {
         super(x, y, 150, 180f, "Dragon.png");
-
         spriteSheet = new Texture("Dragon.png");
 
         int frameWidth = 64;
         int frameHeight = 64;
         TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
-
         TextureRegion[] allFrames = new TextureRegion[16];
         int index = 0;
         for (int row = 0; row < 2; row++) {
@@ -44,7 +41,6 @@ public class Dragon extends Player {
         TextureRegion[] fireFrames = new TextureRegion[3];
         System.arraycopy(allFrames, 8, fireFrames, 0, 3);
         fireAnimation = new Animation<>(0.15f, fireFrames);
-
         stateTime = 0f;
     }
 
@@ -74,21 +70,19 @@ public class Dragon extends Player {
         }
     }
 
-    // Added getter method to check breathing state for monster collision
     public boolean isBreathing() {
         return isBreathing;
     }
 
     @Override
     public void attack() {
-        System.out.println("Dragon breathes fire! (Cooldown 2s)");
     }
 
     @Override
     public void draw(SpriteBatch batch) {
         stateTime += Gdx.graphics.getDeltaTime();
-
         TextureRegion currentFrame;
+
         if (isBreathing) {
             currentFrame = fireAnimation.getKeyFrame(stateTime, true);
         } else {
@@ -101,8 +95,12 @@ public class Dragon extends Player {
             currentFrame.flip(true, false);
         }
 
-        float drawWidth = 128;
-        float drawHeight = 128;
-        batch.draw(currentFrame, x, y, drawWidth, drawHeight);
+        batch.draw(currentFrame, x, y, 128, 128);
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (spriteSheet != null) spriteSheet.dispose();
     }
 }

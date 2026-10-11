@@ -4,15 +4,13 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public abstract class Character {
-    // data of charactor
     protected String name;
-    protected float x, y;          // location
-    protected int health;          // current blood
-    protected int maxHealth;       // max blood
-    protected float speed;         // speed run
-    protected Texture texture;     // picture of character
+    protected float x, y;
+    protected int health;
+    protected int maxHealth;
+    protected float speed;
+    protected Texture texture;
 
-    // Constructor begin
     public Character(String name, float x, float y, int health, float speed, String texturePath) {
         this.name = name;
         this.x = x;
@@ -20,33 +18,36 @@ public abstract class Character {
         this.health = health;
         this.maxHealth = health;
         this.speed = speed;
-        this.texture = new Texture(texturePath); // dowload picture
+        this.texture = new Texture(texturePath);
     }
 
-    // movement
+    public float getX() { return x; }
+    public void setX(float x) { this.x = x; }
+    public float getY() { return y; }
+    public void setY(float y) { this.y = y; }
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
+
     public void move(float dx, float dy, float delta) {
         x += dx * speed * delta;
         y += dy * speed * delta;
     }
 
-    //when attack hp decrease
     public void takeDamage(int damage) {
         health -= damage;
         if (health < 0) {
             health = 0;
         }
+        System.out.println(name + " HP = " + health + "/" + maxHealth);
     }
 
-    // check alive
     public boolean isAlive() {
         return health > 0;
     }
 
-    //Draws the character's texture on the screen at its current X and Y coordinates
     public void draw(SpriteBatch batch) {
         batch.draw(texture, x, y);
     }
-
 
     public abstract void attack();
 
