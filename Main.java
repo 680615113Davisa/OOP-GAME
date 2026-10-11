@@ -96,6 +96,13 @@ public class Main extends ApplicationAdapter {
                 }
             }
 
+            if (!player.isAlive()) {
+                System.out.println("Player died!");
+                isPlaying = false;
+                player.dispose();
+                player = null;
+            }
+
             for (int i = worldItems.size() - 1; i >= 0; i--) {
                 Item item = worldItems.get(i);
                 item.draw(batch);
@@ -109,6 +116,7 @@ public class Main extends ApplicationAdapter {
                     worldItems.remove(i);
                 }
             }
+
 
             batch.end();
         }

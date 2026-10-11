@@ -9,13 +9,11 @@ import com.badlogic.gdx.Input;
 public abstract class Player extends Character {
 
     protected int coinScore = 0; // Current coins
-    protected int health = 100;     // Current HP
     protected int maxHealth = 100;   // Max HP limit
     // Constructor Initializes core stats
     public Player(float x, float y, int health, float speed, String texturePath) {
         super("Player", x, y, health, speed, texturePath);
-        this.health = health;
-        this.maxHealth = health;
+
     }
     // Handles per-frame inputs and screen boundaries
     public void handleInput(float delta) {

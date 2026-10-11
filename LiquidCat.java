@@ -1,21 +1,21 @@
 package com.game.oop;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import java.util.ArrayList;
-import java.util.List;
+import com.badlogic.gdx.Input; // chack key
+import com.badlogic.gdx.graphics.Texture; // picture in game
+import com.badlogic.gdx.graphics.g2d.Animation;// manage animation
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;// image on screen
+import com.badlogic.gdx.graphics.g2d.TextureRegion; //image to frame
+import java.util.ArrayList;// create a list where you can  add or remove
+import java.util.List;//mutiple data
 // A specific playable character that can turn into liquid and drop poison traps
 public class LiquidCat extends Player {
-    private Texture walkSheet;
-    private Texture liquidSheet;
-    private Animation<TextureRegion> walkAnimation;
-    private Animation<TextureRegion> liquidAnimation;
-    private float stateTime;
-    private float liquidStateTime = 0f;
+    private Texture walkSheet; // stores for walking
+    private Texture liquidSheet;// for liq
+    private Animation<TextureRegion> walkAnimation;// stores anima walk
+    private Animation<TextureRegion> liquidAnimation;// stores anima liq
+    private float stateTime;// stores the time taken to play the walking animation
+    private float liquidStateTime = 0f;//  stores the time of liq
 
     private boolean isLiquid = false;// Current transformation state
     private List<PoisonPuddle> puddles;// Stores active poison traps on the map
@@ -95,7 +95,7 @@ public class LiquidCat extends Player {
             puddle.update(delta);
             puddle.draw(batch);
 
-            if (monsters != null) {
+            if (monsters != null) { // chack moster โดนกับดัก
                 for (Monster monster : monsters) {
                     if (puddle.collidesWith(monster)) {
                         monster.applyPoison(4.0f);
