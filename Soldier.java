@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/** The playable soldier character. */
 public class Soldier extends Player {
     private static final int CHARACTER_SIZE = 100;
     private static final float PICKUP_SIZE = 32f;
@@ -50,7 +49,6 @@ public class Soldier extends Player {
     }
 
     public Soldier(float x, float y) {
-        // Character requires a standalone texture; draw() renders the Soldier sheets instead.
         super(x, y, 100, 200f, "Dragon.png");
         this.name = "Soldier";
         backAnimation = loadAnimation("Back", 0);
@@ -145,18 +143,18 @@ public class Soldier extends Player {
             animationTime = 0f;
         }
 
-        x = Math.max(0f, Math.min(x, screenWidth - CHARACTER_SIZE));
-        y = Math.max(0f, Math.min(y, screenHeight - CHARACTER_SIZE));
+        setX(clamp(getX(), 0f, Math.max(0f, screenWidth - CHARACTER_SIZE)));
+        setY(clamp(getY(), 0f, Math.max(0f, screenHeight - CHARACTER_SIZE)));
 
         updatePickups(delta, screenWidth, screenHeight);
     }
 
     private void updatePickups(float delta, float screenWidth, float screenHeight) {
         if (!initialPickupsSpawned) {
-            addPickup(x + CHARACTER_SIZE + 24f, y + 24f, PickupType.COIN, screenWidth, screenHeight);
-            addPickup(x - PICKUP_SIZE - 24f, y + CHARACTER_SIZE - PICKUP_SIZE,
+            addPickup(getX() + CHARACTER_SIZE + 24f, getY() + 24f, PickupType.COIN, screenWidth, screenHeight);
+            addPickup(getX() - PICKUP_SIZE - 24f, getY() + CHARACTER_SIZE - PICKUP_SIZE,
                 PickupType.POTION, screenWidth, screenHeight);
-            addPickup(x + 30f, y + CHARACTER_SIZE + 24f,
+            addPickup(getX() + 30f, getY() + CHARACTER_SIZE + 24f,
                 PickupType.POST_IT, screenWidth, screenHeight);
             initialPickupsSpawned = true;
         }
@@ -188,40 +186,26 @@ public class Soldier extends Player {
     }
 
     private boolean isTouching(Pickup pickup) {
-        float dx = x + CHARACTER_SIZE / 2f - (pickup.x + PICKUP_SIZE / 2f);
-        float dy = y + CHARACTER_SIZE / 2f - (pickup.y + PICKUP_SIZE / 2f);
+        float dx = getCenterX() - (pickup.x + PICKUP_SIZE / 2f);
+        float dy = getCenterY() - (pickup.y + PICKUP_SIZE / 2f);
         return dx * dx + dy * dy <= PICKUP_DISTANCE * PICKUP_DISTANCE;
     }
 
     private void collect(Pickup pickup) {
-        switch (pickup.type) {
-            case COIN:
-                addCoin(1);
-                System.out.println("Coin collected!");
-                break;
-            case POTION:
-                heal(20);
-                System.out.println("Health potion collected!");
-                break;
-            case POST_IT:
-                bonusDamage += POST_IT_DAMAGE_BONUS;
-                System.out.println("Post-it collected! Attack damage: " + getAttackDamage());
-                break;
-        }
+        pickup.type.collect(this);
     }
 
     public int getAttackDamage() {
         return BASE_ATTACK_DAMAGE + bonusDamage;
     }
 
-    /** Attacks a nearby living monster using the Soldier's current damage. */
     public boolean attack(Monster monster) {
         if (monster == null || !monster.isAlive()) return false;
 
-        float soldierCenterX = x + CHARACTER_SIZE / 2f;
-        float soldierCenterY = y + CHARACTER_SIZE / 2f;
-        float monsterCenterX = monster.x + 32f;
-        float monsterCenterY = monster.y + 32f;
+        float soldierCenterX = getCenterX();
+        float soldierCenterY = getCenterY();
+        float monsterCenterX = monster.getX() + 32f;
+        float monsterCenterY = monster.getY() + 32f;
         float dx = monsterCenterX - soldierCenterX;
         float dy = monsterCenterY - soldierCenterY;
         if (dx * dx + dy * dy > ATTACK_RANGE * ATTACK_RANGE) return false;
@@ -239,10 +223,10 @@ public class Soldier extends Player {
     public void handleInput(float delta) {
         float dx = 0f;
         float dy = 0f;
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) dx -= 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) dx += 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) dy -= 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) dy += 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += 1f;
 
         update(dx, dy, delta, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) attack();
@@ -250,12 +234,12 @@ public class Soldier extends Player {
 
     @Override
     public float getCenterX() {
-        return 0;
+        return getX() + CHARACTER_SIZE / 2f;
     }
 
     @Override
     public float getCenterY() {
-        return 0;
+        return getY() + CHARACTER_SIZE / 2f;
     }
 
     @Override
@@ -284,15 +268,13 @@ public class Soldier extends Player {
 
     private void drawCharacter(SpriteBatch batch) {
         TextureRegion frame = currentAnimation.getKeyFrame(animationTime, true);
-        batch.draw(frame, x, y, CHARACTER_SIZE, CHARACTER_SIZE);
+        batch.draw(frame, getX(), getY(), CHARACTER_SIZE, CHARACTER_SIZE);
     }
 
     @Override
     public void attack() {
-        // Call attack(monster) when a target is available.
     }
 
-    /** Keeps Player's shadowed health field in sync with Character health. */
     @Override
     public void takeDamage(int damage) {
         if (damage <= 0) return;
@@ -301,7 +283,6 @@ public class Soldier extends Player {
         health = Math.max(0, health - damage);
     }
 
-    /** Heals through Player and mirrors the restored amount to Character. */
     @Override
     public void heal(int amount) {
         if (amount <= 0) return;
@@ -315,7 +296,7 @@ public class Soldier extends Player {
     }
 
     public void dispose() {
-        texture.dispose();
+        super.dispose();
         for (Texture sheet : directionSheets) {
             if (sheet != null) sheet.dispose();
         }
@@ -327,9 +308,29 @@ public class Soldier extends Player {
     }
 
     private enum PickupType {
-        COIN,
-        POTION,
-        POST_IT
+        COIN {
+            @Override
+            void collect(Soldier soldier) {
+                soldier.addCoin(1);
+                System.out.println("Coin collected!");
+            }
+        },
+        POTION {
+            @Override
+            void collect(Soldier soldier) {
+                soldier.heal(20);
+                System.out.println("Health potion collected!");
+            }
+        },
+        POST_IT {
+            @Override
+            void collect(Soldier soldier) {
+                soldier.bonusDamage += POST_IT_DAMAGE_BONUS;
+                System.out.println("Post-it collected! Attack damage: " + soldier.getAttackDamage());
+            }
+        };
+
+        abstract void collect(Soldier soldier);
     }
 
     private static class Pickup {
