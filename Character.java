@@ -1,5 +1,4 @@
-package com.game.oop;
-
+package Characters;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
@@ -25,6 +24,8 @@ public abstract class Character {
     public void setX(float x) { this.x = x; }
     public float getY() { return y; }
     public void setY(float y) { this.y = y; }
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
 
     public void move(float dx, float dy, float delta) {
         x += dx * speed * delta;
@@ -33,12 +34,10 @@ public abstract class Character {
 
     public void takeDamage(int damage) {
         health -= damage;
-
         if (health < 0) {
             health = 0;
         }
-
-        System.out.println("HP = " + health);
+        System.out.println(name + " HP = " + health + "/" + maxHealth);
     }
 
     public boolean isAlive() {

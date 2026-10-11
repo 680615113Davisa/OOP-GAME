@@ -1,31 +1,27 @@
-package com.game.oop;
-
+package Characters;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input; // chack key
-import com.badlogic.gdx.graphics.Texture; // picture in game
-import com.badlogic.gdx.graphics.g2d.Animation;// manage animation
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;// image on screen
-import com.badlogic.gdx.graphics.g2d.TextureRegion; //image to frame
-import java.util.ArrayList;// create a list where you can  add or remove
-import java.util.List;//mutiple data
-// A specific playable character that can turn into liquid and drop poison traps
-public class LiquidCat extends Player {
-    private Texture walkSheet; // stores for walking
-    private Texture liquidSheet;// for liq
-    private Animation<TextureRegion> walkAnimation;// stores anima walk
-    private Animation<TextureRegion> liquidAnimation;// stores anima liq
-    private float stateTime;// stores the time taken to play the walking animation
-    private float liquidStateTime = 0f;//  stores the time of liq
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import java.util.ArrayList;
+import java.util.List;
 
-    private boolean isLiquid = false;// Current transformation state
-    private List<PoisonPuddle> puddles;// Stores active poison traps on the map
-    private float cooldownTimer = 0f;// Tracks ability cooldown
-    private final float COOLDOWN_TIME = 5.0f;// 5 seconds cooldown for Liquid form
+public class LiquidCat extends Player {
+    private Texture walkSheet;
+    private Texture liquidSheet;
+    private Animation<TextureRegion> walkAnimation;
+    private Animation<TextureRegion> liquidAnimation;
+    private float stateTime;
+    private float liquidStateTime = 0f;
+    private boolean isLiquid = false;
+    private List<PoisonPuddle> puddles;
+    private float cooldownTimer = 0f;
+    private final float COOLDOWN_TIME = 5.0f;
 
     public LiquidCat(float x, float y) {
         super(x, y, 100, 200f, "Cat right.png");
-
-// Load and split the walking animation frames
         walkSheet = new Texture("Cat right.png");
         TextureRegion[][] walkTmp = TextureRegion.split(walkSheet, 64, 64);
         int walkCols = walkTmp[0].length;
@@ -35,7 +31,6 @@ public class LiquidCat extends Player {
         }
         walkAnimation = new Animation<>(0.12f, walkFrames);
 
-// Load and split the liquid transformation animation frames
         liquidSheet = new Texture("Catli2.png");
         TextureRegion[][] liquidTmp = TextureRegion.split(liquidSheet, 64, 64);
         int liquidCols = liquidTmp[1].length;
@@ -51,17 +46,14 @@ public class LiquidCat extends Player {
 
     @Override
     public void handleInput(float delta) {
-        // Decrease cooldown timer every frame
         if (cooldownTimer > 0) {
             cooldownTimer -= delta;
         }
-// Press Q to toggle Liquid state
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
             if (cooldownTimer <= 0) {
                 isLiquid = !isLiquid;
                 cooldownTimer = COOLDOWN_TIME;
                 liquidStateTime = 0f;
-
                 if (isLiquid) {
                     System.out.println("Liquid !");
                 } else {
@@ -71,38 +63,37 @@ public class LiquidCat extends Player {
                 System.out.println("Cooldown is active! Please wait.");
             }
         }
-// Adjust movement speed based on state
         if (isLiquid) {
             this.speed = 60f;
         } else {
             this.speed = 200f;
         }
-// Call the movement
         super.handleInput(delta);
 
-// Drop a poison puddle on Left Click
         if (!isLiquid) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-                puddles.add(new PoisonPuddle(this.x, this.y));
+                // Center the 100x100 puddle under the 64x64 cat's feet.
+                float puddleX = this.x - 18f;
+                float puddleY = this.y - 38f;
+                puddles.add(new PoisonPuddle(puddleX, puddleY));
                 System.out.println("Left Click Dropped a poison puddle!");
             }
         }
     }
-    // Updates puddle timers and checks if monsters step on them
+
     public void updateAndDrawPuddles(SpriteBatch batch, float delta, List<Monster> monsters) {
         for (int i = puddles.size() - 1; i >= 0; i--) {
             PoisonPuddle puddle = puddles.get(i);
             puddle.update(delta);
             puddle.draw(batch);
 
-            if (monsters != null) { // chack moster โดนกับดัก
+            if (monsters != null) {
                 for (Monster monster : monsters) {
                     if (puddle.collidesWith(monster)) {
                         monster.applyPoison(4.0f);
                     }
                 }
             }
-// Remove puddle from the list if its timer runs out
             if (puddle.isExpired()) {
                 puddle.dispose();
                 puddles.remove(i);
@@ -110,7 +101,7 @@ public class LiquidCat extends Player {
         }
     }
 
-    @Override// Overrides standard damage to make the cat invincible while in liquid form
+    @Override
     public void takeDamage(int damage) {
         if (isLiquid) {
             System.out.println("Damage blocked! Cat is in liquid ");
@@ -125,7 +116,7 @@ public class LiquidCat extends Player {
             System.out.println("Cat attack!");
         }
     }
-    // Draws the appropriate animation based on the current state
+
     @Override
     public void draw(SpriteBatch batch) {
         stateTime += Gdx.graphics.getDeltaTime();
@@ -133,17 +124,24 @@ public class LiquidCat extends Player {
 
         if (isLiquid) {
             liquidStateTime += Gdx.graphics.getDeltaTime();
-// false = play once, do not loop
             currentFrame = liquidAnimation.getKeyFrame(liquidStateTime, false);
         } else {
-// true = loop the walking animation
             currentFrame = walkAnimation.getKeyFrame(stateTime, true);
         }
-
-        batch.draw(currentFrame, x, y,64,64);
+        batch.draw(currentFrame, x, y, 64, 64);
     }
 
-    public boolean isLiquid() {
-        return isLiquid;
+    public boolean isLiquid() { return isLiquid; }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (walkSheet != null) walkSheet.dispose();
+        if (liquidSheet != null) liquidSheet.dispose();
+        for (PoisonPuddle puddle : puddles) {
+            puddle.dispose();
+        }
+        puddles.clear();
     }
 }
+

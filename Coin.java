@@ -1,4 +1,6 @@
-package com.game.oop;
+package Item;
+import Characters.Player;
+import io.github.Nawaphat680615033.GameSave;
 
 public class Coin extends Item {
     public Coin(float x, float y) {
@@ -7,8 +9,10 @@ public class Coin extends Item {
 
     @Override
     public void applyEffect(Player player) {
+        // Session score is useful for the HUD, while GameSave is the permanent wallet.
         player.addCoin(1);
-        this.isCollected = true; //
-        System.out.println("Coins!");
+        GameSave.addCoins(1);
+        this.isCollected = true;
+        System.out.println("Coin collected! Wallet: " + GameSave.getCoins());
     }
 }
