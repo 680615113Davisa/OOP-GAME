@@ -25,10 +25,14 @@ Maybefinalcattt.png
 Mummy 2.png
 Mummy 3.png
 Mummy.png
+Namegame.png
 Right .png
+Scorpion .png
+Soldier.zip
 backgroundoop.png
 backgroundplay.png
 desktop.ini
+gameover.png
 icon.jpg
 libgdx.png
 postit.png
@@ -40,4 +44,6 @@ start.png
 startbackground.png
 tuition.png
 tutorialicon.png
-ไม่มีชื่อ 2.png
+ไม่มีชื่อ 3.png
+ไม่มีชื่อ 4.png
+ไม่มีชื่อ.png

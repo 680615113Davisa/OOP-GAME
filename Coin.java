@@ -7,6 +7,7 @@ public class Coin extends Item {
 
     @Override
     public void applyEffect(Player player) {
+        // Session score is useful for the HUD, while GameSave is the permanent wallet.
         player.addCoin(1);
         GameSave.addCoins(1);
         this.isCollected = true;

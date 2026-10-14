@@ -33,8 +33,6 @@ public abstract class Item {
     public void setY(float y) { this.y = y; }
 
     public void dispose() {
-        if (texture != null) {
-            texture.dispose();
-        }
+
     }
 }

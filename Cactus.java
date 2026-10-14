@@ -8,43 +8,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cactus extends Monster {
-    private Texture spriteSheet;
-    private Animation<TextureRegion> animation;
-    private float stateTime;
-    private float shootTimer = 0f;
+
     private static final float SHOOT_COOLDOWN = 2.2f;
-    private List<CactusBullet> bullets;
+
+    private final Texture spriteSheet;
+    private final Animation<TextureRegion> animation;
+    private final List<CactusBullet> bullets = new ArrayList<>();
+
+    private float stateTime = 0f;
+    private float shootTimer = 0f;
 
     public Cactus(float x, float y) {
-        super("Cactus", x, y, 40, 40f, "ไม่มีชื่อ 2.png");
-        spriteSheet = new Texture("ไม่มีชื่อ 2.png");
-        bullets = new ArrayList<>();
+        // Initialize Cactus with increased health and adjusted speed
+        super("Cactus", x, y, 50, 35f, "Cactus.png");
 
-        int cols = 5; // มี 5 เฟรมตามภาพที่ส่งมา
-        int frameWidth = spriteSheet.getWidth() / cols;
+        spriteSheet = new Texture("Cactus.png");
+
+        int columns = 5;
+        int frameWidth = spriteSheet.getWidth() / columns;
         int frameHeight = spriteSheet.getHeight();
-        TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
-        TextureRegion[] frames = new TextureRegion[cols];
-        System.arraycopy(tmp[0], 0, frames, 0, cols);
+
+        TextureRegion[][] tmp =
+            TextureRegion.split(spriteSheet, frameWidth, frameHeight);
+
+        TextureRegion[] frames = new TextureRegion[columns];
+        System.arraycopy(tmp[0], 0, frames, 0, columns);
 
         animation = new Animation<>(0.2f, frames);
-        stateTime = 0f;
     }
 
     @Override
     public void attack() {
-    }
-
-    public void updateBullets(float delta, Player player, SpriteBatch batch) {
-        for (int i = bullets.size() - 1; i >= 0; i--) {
-            CactusBullet bullet = bullets.get(i);
-            bullet.update(delta, player);
-            bullet.draw(batch);
-            if (!bullet.isActive()) {
-                bullet.dispose();
-                bullets.remove(i);
-            }
-        }
+        // Cactus attacks by spawning CactusBullet inside the update method.
     }
 
     @Override
@@ -53,24 +48,52 @@ public class Cactus extends Monster {
         updatePoison(delta, worldItems);
 
         shootTimer += delta;
-        if (shootTimer >= SHOOT_COOLDOWN) {
-            bullets.add(new CactusBullet(this.x + 32, this.y + 32, player.getCenterX(), player.getCenterY()));
+
+        if (shootTimer >= SHOOT_COOLDOWN && player.isAlive()) {
+            // Spawn bullet from the center of the larger cactus size
+            bullets.add(new CactusBullet(
+                this.x + 48f,
+                this.y + 48f,
+                player.getCenterX(),
+                player.getCenterY()
+            ));
+
             shootTimer = 0f;
+        }
+    }
+
+    public void updateBullets(float delta, Player player, SpriteBatch batch) {
+        for (int i = bullets.size() - 1; i >= 0; i--) {
+            CactusBullet bullet = bullets.get(i);
+
+            bullet.update(delta, player);
+            bullet.draw(batch);
+
+            if (!bullet.isActive()) {
+                bullet.dispose();
+                bullets.remove(i);
+            }
         }
     }
 
     @Override
     public void draw(SpriteBatch batch) {
-        TextureRegion currentFrame = animation.getKeyFrame(stateTime, true);
-        batch.draw(currentFrame, x, y, 64, 64);
+        TextureRegion currentFrame =
+            animation.getKeyFrame(stateTime, true);
+
+        // Render cactus with a larger scale to match character proportions
+        batch.draw(currentFrame, x, y, 140f, 140f);
     }
 
     @Override
     public void dispose() {
         super.dispose();
-        if (spriteSheet != null) spriteSheet.dispose();
-        for (CactusBullet b : bullets) {
-            b.dispose();
+        spriteSheet.dispose();
+
+        for (CactusBullet bullet : bullets) {
+            bullet.dispose();
         }
+
+        bullets.clear();
     }
 }

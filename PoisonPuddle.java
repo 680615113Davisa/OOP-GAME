@@ -24,6 +24,7 @@ public class PoisonPuddle {
     }
 
     public boolean collidesWith(Monster monster) {
+        // Compare the center of the 100x100 puddle with the center of a 64x64 monster.
         float puddleCenterX = this.x + 50f;
         float puddleCenterY = this.y + 50f;
         float monsterCenterX = monster.getX() + 32f;
@@ -39,6 +40,8 @@ public class PoisonPuddle {
     }
 
     public void dispose() {
-        texture.dispose();
+
     }
 }
+
+

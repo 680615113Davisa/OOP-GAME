@@ -12,6 +12,7 @@ public class Scorpion extends Monster {
     private final Texture spriteSheet;
     private final Animation<TextureRegion> animation;
     private float stateTime;
+
     private Player targetPlayer;
     private static final float ATTACK_COOLDOWN = 1.0f;
     private static final float ATTACK_RANGE = 45f;
@@ -30,6 +31,8 @@ public class Scorpion extends Monster {
         }
         animation = new Animation<>(0.15f, frames);
         stateTime = 0f;
+
+        // Stagger attacks so newly spawned monsters do not all hit on the same frame.
         attackTimer = new Random().nextFloat();
     }
 
@@ -37,6 +40,7 @@ public class Scorpion extends Monster {
     public void attack() {
         if (targetPlayer != null && targetPlayer.isAlive()) {
             targetPlayer.takeDamage(ATTACK_DAMAGE);
+            System.out.println("Scorpion attacks player for " + ATTACK_DAMAGE + " damage!");
         }
     }
 

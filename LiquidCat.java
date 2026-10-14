@@ -55,6 +55,13 @@ public class LiquidCat extends Player {
                 isLiquid = !isLiquid;
                 cooldownTimer = COOLDOWN_TIME;
                 liquidStateTime = 0f;
+                if (isLiquid) {
+                    System.out.println("Liquid !");
+                } else {
+                    System.out.println("N Cat");
+                }
+            } else {
+                System.out.println("Cooldown is active! Please wait.");
             }
         }
         if (isLiquid) {
@@ -66,9 +73,11 @@ public class LiquidCat extends Player {
 
         if (!isLiquid) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                // Center the 100x100 puddle under the 64x64 cat's feet.
                 float puddleX = this.x - 18f;
                 float puddleY = this.y - 38f;
                 puddles.add(new PoisonPuddle(puddleX, puddleY));
+                System.out.println("Left Click Dropped a poison puddle!");
             }
         }
     }
@@ -96,6 +105,7 @@ public class LiquidCat extends Player {
     @Override
     public void takeDamage(int damage) {
         if (isLiquid) {
+            System.out.println("Damage blocked! Cat is in liquid ");
             return;
         }
         super.takeDamage(damage);
@@ -103,6 +113,9 @@ public class LiquidCat extends Player {
 
     @Override
     public void attack() {
+        if (!isLiquid) {
+            System.out.println("Cat attack!");
+        }
     }
 
     @Override

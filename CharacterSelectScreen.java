@@ -11,18 +11,26 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+/** Character shop + selection screen with persistent unlocks. */
 public class CharacterSelectScreen implements Screen {
     private static final float UI_WIDTH = 636f;
     private static final float UI_HEIGHT = 504f;
 
-    private static final float CARD_WIDTH = 176f;
-    private static final float CARD_HEIGHT = 270f;
-    private static final float BUTTON_WIDTH = 142f;
-    private static final float BUTTON_HEIGHT = 38f;
+    // Four compact cards so the layout stays exactly the same when resized.
+    private static final float CARD_WIDTH = 136f;
+    private static final float CARD_HEIGHT = 258f;
+    private static final float BUTTON_WIDTH = 116f;
+    private static final float BUTTON_HEIGHT = 36f;
 
     private static final Color LIGHT_SAND = new Color(1.00f, 0.94f, 0.69f, 1f);
     private static final Color PANEL = new Color(0.21f, 0.12f, 0.065f, 0.97f);
@@ -31,21 +39,27 @@ public class CharacterSelectScreen implements Screen {
     private static final Color CAT_ACCENT = new Color(0.58f, 0.62f, 0.28f, 1f);
     private static final Color DRAGON_ACCENT = new Color(0.82f, 0.32f, 0.12f, 1f);
     private static final Color GRIM_ACCENT = new Color(0.55f, 0.38f, 0.27f, 1f);
+    private static final Color SOLDIER_ACCENT = new Color(0.66f, 0.53f, 0.28f, 1f);
 
     private final Main game;
     private final OrthographicCamera camera;
     private final OrthographicCamera backgroundCamera;
     private final Viewport viewport;
     private final Vector3 touchPoint = new Vector3();
+
     private final Texture background;
     private final Texture catSheet;
     private final Texture dragonSheet;
     private final Texture grimSheet;
+    private final Texture soldierSheet;
     private final Texture uiPixel;
     private final Texture coinIcon;
+
     private final TextureRegion catPortrait;
     private final TextureRegion dragonPortrait;
     private final TextureRegion grimPortrait;
+    private final TextureRegion soldierPortrait;
+
     private final BitmapFont font;
     private final GlyphLayout layout = new GlyphLayout();
 
@@ -66,11 +80,13 @@ public class CharacterSelectScreen implements Screen {
         catSheet = new Texture("Cat right.png");
         dragonSheet = new Texture("Dragon.png");
         grimSheet = new Texture("Grim_soul-sheet.png");
+        soldierSheet = loadTextureFromZip("Soldier.zip", "Front.png");
         coinIcon = new Texture("coin.png");
 
         catPortrait = firstFrame(catSheet, 8, 1);
         dragonPortrait = firstFrame(dragonSheet, 8, 2);
         grimPortrait = firstFrame(grimSheet, 7, 1);
+        soldierPortrait = firstFrame(soldierSheet, 4, 1);
 
         Pixmap pixel = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixel.setColor(Color.WHITE);
@@ -84,6 +100,39 @@ public class CharacterSelectScreen implements Screen {
     private TextureRegion firstFrame(Texture texture, int columns, int rows) {
         return new TextureRegion(texture, 0, 0,
             texture.getWidth() / columns, texture.getHeight() / rows);
+    }
+
+    private Texture loadTextureFromZip(String zipPath, String targetFileName) {
+        try (ZipInputStream zip = new ZipInputStream(Gdx.files.internal(zipPath).read())) {
+            ZipEntry entry;
+            byte[] buffer = new byte[4096];
+
+            while ((entry = zip.getNextEntry()) != null) {
+                String fileName = entry.getName();
+                int slash = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
+                fileName = fileName.substring(slash + 1).replace(" ", "");
+
+                if (!fileName.equalsIgnoreCase(targetFileName.replace(" ", ""))) continue;
+
+                ByteArrayOutputStream imageBytes = new ByteArrayOutputStream();
+                int bytesRead;
+                while ((bytesRead = zip.read(buffer)) != -1) {
+                    imageBytes.write(buffer, 0, bytesRead);
+                }
+
+                byte[] data = imageBytes.toByteArray();
+                Pixmap pixmap = new Pixmap(data, 0, data.length);
+                try {
+                    return new Texture(pixmap);
+                } finally {
+                    pixmap.dispose();
+                }
+            }
+        } catch (IOException e) {
+            throw new GdxRuntimeException("Could not load " + targetFileName + " from " + zipPath, e);
+        }
+
+        throw new GdxRuntimeException("Missing " + targetFileName + " in " + zipPath);
     }
 
     @Override
@@ -131,14 +180,20 @@ public class CharacterSelectScreen implements Screen {
             if (GameSave.isGrimUnlocked()) startGrim();
             else showMessage("Grim is locked. Buy it for 20,000 coins.");
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_4)) {
+            if (GameSave.isSoldierUnlocked()) startSoldier();
+            else showMessage("Soldier is locked. Buy it for 30,000 coins.");
+        }
 
-        float cardY = 70f;
-        float gap = 27f;
-        float total = CARD_WIDTH * 3f + gap * 2f;
+        float cardY = 76f;
+        float gap = 12f;
+        float total = CARD_WIDTH * 4f + gap * 3f;
         float firstX = (w - total) / 2f;
+
         float catX = firstX;
-        float dragonX = firstX + CARD_WIDTH + gap;
+        float dragonX = firstX + (CARD_WIDTH + gap);
         float grimX = firstX + (CARD_WIDTH + gap) * 2f;
+        float soldierX = firstX + (CARD_WIDTH + gap) * 3f;
 
         if (Gdx.input.justTouched()) {
             touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0f);
@@ -150,48 +205,54 @@ public class CharacterSelectScreen implements Screen {
                 startCat();
                 return;
             }
+
             if (insideButton(mx, my, dragonX, cardY)) {
                 if (GameSave.isDragonUnlocked()) {
                     startDragon();
                     return;
                 }
-                if (GameSave.buyDragon()) {
-                    showMessage("Dragon unlocked! 10,000 coins spent.");
-                } else {
-                    showMessage("Not enough coins. Dragon costs 10,000.");
-                }
+                if (GameSave.buyDragon()) showMessage("Dragon unlocked! 10,000 coins spent.");
+                else showMessage("Not enough coins. Dragon costs 10,000.");
             }
+
             if (insideButton(mx, my, grimX, cardY)) {
                 if (GameSave.isGrimUnlocked()) {
                     startGrim();
                     return;
                 }
-                if (GameSave.buyGrim()) {
-                    showMessage("Grim unlocked! 20,000 coins spent.");
-                } else {
-                    showMessage("Not enough coins. Grim costs 20,000.");
+                if (GameSave.buyGrim()) showMessage("Grim unlocked! 20,000 coins spent.");
+                else showMessage("Not enough coins. Grim costs 20,000.");
+            }
+
+            if (insideButton(mx, my, soldierX, cardY)) {
+                if (GameSave.isSoldierUnlocked()) {
+                    startSoldier();
+                    return;
                 }
+                if (GameSave.buySoldier()) showMessage("Soldier unlocked! 30,000 coins spent.");
+                else showMessage("Not enough coins. Soldier costs 30,000.");
             }
         }
 
         game.batch.begin();
 
         drawRect(0f, h - 118f, w, 118f, new Color(0.20f, 0.105f, 0.040f, 0.95f));
-
         drawCenteredShadowed("CHOOSE YOUR FIGHTER", w / 2f, h - 34f, 1.72f, LIGHT_SAND, 3f);
         drawCenteredShadowed("COLLECT COINS  -  UNLOCK DESERT LEGENDS", w / 2f,
             h - 66f, 0.70f, MUTED, 2f);
-
         drawWallet(w - 22f, h - 91f);
 
         drawCharacterCard(catX, cardY, catPortrait,
-            "LIQUID CAT", "Poison Puddle", "Immune in Liquid Form", 0, true, 1, CAT_ACCENT);
+            "LIQUID CAT", "Poison Puddle", "Liquid Immunity", 0, true, 1, CAT_ACCENT);
         drawCharacterCard(dragonX, cardY, dragonPortrait,
             "DRAGON", "Fire Breath", "150 HP", GameSave.DRAGON_COST,
             GameSave.isDragonUnlocked(), 2, DRAGON_ACCENT);
         drawCharacterCard(grimX, cardY, grimPortrait,
-            "GRIM", "Soul Aura", "Power Grows on Kills", GameSave.GRIM_COST,
+            "GRIM", "Soul Aura", "Power on Kills", GameSave.GRIM_COST,
             GameSave.isGrimUnlocked(), 3, GRIM_ACCENT);
+        drawCharacterCard(soldierX, cardY, soldierPortrait,
+            "SOLDIER", "Close Combat", "10 Damage", GameSave.SOLDIER_COST,
+            GameSave.isSoldierUnlocked(), 4, SOLDIER_ACCENT);
 
         drawCenteredShadowed("ESC  -  BACK", w / 2f, 22f, 0.68f, MUTED, 1.5f);
 
@@ -211,92 +272,84 @@ public class CharacterSelectScreen implements Screen {
                                    int cost, boolean unlocked, int hotkey, Color accent) {
         Color border = unlocked ? accent : new Color(0.42f, 0.31f, 0.20f, 1f);
 
-        drawRect(x - 4f, y - 4f, CARD_WIDTH + 8f, CARD_HEIGHT + 8f, new Color(0.12f, 0.065f, 0.025f, 0.92f));
-        drawRect(x - 2f, y - 2f, CARD_WIDTH + 4f, CARD_HEIGHT + 4f, border);
+        drawRect(x - 3f, y - 3f, CARD_WIDTH + 6f, CARD_HEIGHT + 6f,
+            new Color(0.12f, 0.065f, 0.025f, 0.92f));
+        drawRect(x - 1f, y - 1f, CARD_WIDTH + 2f, CARD_HEIGHT + 2f, border);
         drawRect(x, y, CARD_WIDTH, CARD_HEIGHT, PANEL);
-        drawRect(x, y + CARD_HEIGHT - 48f, CARD_WIDTH, 48f, PANEL_TOP);
-        drawRect(x + 10f, y + CARD_HEIGHT - 50f, CARD_WIDTH - 20f, 2f, accent);
+        drawRect(x, y + CARD_HEIGHT - 46f, CARD_WIDTH, 46f, PANEL_TOP);
+        drawRect(x + 8f, y + CARD_HEIGHT - 48f, CARD_WIDTH - 16f, 2f, accent);
 
-        drawCenteredShadowed(name, x + CARD_WIDTH / 2f, y + CARD_HEIGHT - 18f, 1.02f,
-            unlocked ? Color.WHITE : MUTED, 2f);
-        drawCenteredShadowed("KEY " + hotkey, x + CARD_WIDTH / 2f, y + CARD_HEIGHT - 38f,
-            0.58f, accent, 1f);
+        drawCenteredShadowed(name, x + CARD_WIDTH / 2f, y + CARD_HEIGHT - 17f,
+            0.83f, unlocked ? Color.WHITE : MUTED, 1.5f);
+        drawCenteredShadowed("KEY " + hotkey, x + CARD_WIDTH / 2f, y + CARD_HEIGHT - 36f,
+            0.48f, accent, 1f);
 
-        float portraitSize = 96f;
+        float portraitSize = 76f;
         float portraitX = x + (CARD_WIDTH - portraitSize) / 2f;
         float portraitY = y + 116f;
 
-        drawRect(portraitX - 4f, portraitY - 4f, portraitSize + 8f, portraitSize + 8f,
-            new Color(accent.r, accent.g, accent.b, unlocked ? 0.44f : 0.18f));
-        drawRect(portraitX - 1f, portraitY - 1f, portraitSize + 2f, portraitSize + 2f,
-            new Color(0.17f, 0.09f, 0.035f, 1f));
-
-        if (!unlocked) game.batch.setColor(0.42f, 0.34f, 0.26f, 1f);
-        else game.batch.setColor(Color.WHITE);
+        game.batch.setColor(unlocked ? Color.WHITE : new Color(0.30f, 0.30f, 0.30f, 1f));
         game.batch.draw(portrait, portraitX, portraitY, portraitSize, portraitSize);
         game.batch.setColor(Color.WHITE);
 
         if (!unlocked) {
-            drawRect(portraitX, portraitY + 31f, portraitSize, 34f,
-                new Color(0.15f, 0.075f, 0.025f, 0.90f));
-            drawCenteredShadowed("SEALED", x + CARD_WIDTH / 2f, portraitY + 55f,
-                0.84f, LIGHT_SAND, 2f);
+            drawRect(portraitX, portraitY + 25f, portraitSize, 26f,
+                new Color(0.08f, 0.04f, 0.02f, 0.84f));
+            drawCenteredShadowed("SEALED", x + CARD_WIDTH / 2f, portraitY + 43f,
+                0.57f, LIGHT_SAND, 1f);
         }
 
-        drawCenteredShadowed(line1, x + CARD_WIDTH / 2f, y + 102f, 0.70f,
-            Color.WHITE, 1.5f);
-        drawCenteredShadowed(line2, x + CARD_WIDTH / 2f, y + 83f, 0.64f,
+        drawCenteredShadowed(line1, x + CARD_WIDTH / 2f, y + 100f, 0.53f,
+            new Color(0.95f, 0.88f, 0.75f, 1f), 1f);
+        drawCenteredShadowed(line2, x + CARD_WIDTH / 2f, y + 83f, 0.48f,
             MUTED, 1f);
 
         float buttonX = x + (CARD_WIDTH - BUTTON_WIDTH) / 2f;
-        float buttonY = y + 24f;
+        float buttonY = y + 20f;
         boolean canAfford = GameSave.getCoins() >= cost;
         Color buttonColor;
         String buttonText;
 
         if (cost == 0 || unlocked) {
-            buttonColor = new Color(accent.r * 0.55f, accent.g * 0.55f, accent.b * 0.55f, 1f);
+            buttonColor = new Color(0.31f, 0.39f, 0.16f, 1f);
             buttonText = "ENTER";
         } else if (canAfford) {
-            buttonColor = new Color(0.68f, 0.36f, 0.10f, 1f);
-            buttonText = "UNLOCK " + formatCoins(cost);
+            buttonColor = new Color(0.58f, 0.31f, 0.10f, 1f);
+            buttonText = "BUY " + shortCoins(cost);
         } else {
-            buttonColor = new Color(0.27f, 0.18f, 0.105f, 1f);
-            buttonText = formatCoins(cost) + " COINS";
+            buttonColor = new Color(0.25f, 0.15f, 0.09f, 1f);
+            buttonText = shortCoins(cost) + " COINS";
         }
 
-        drawRect(buttonX - 2f, buttonY - 2f, BUTTON_WIDTH + 4f, BUTTON_HEIGHT + 4f,
-            unlocked || canAfford ? accent : new Color(0.45f, 0.32f, 0.19f, 1f));
         drawRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, buttonColor);
-        drawCenteredShadowed(buttonText, x + CARD_WIDTH / 2f, buttonY + 25f,
-            0.68f, Color.WHITE, 1.5f);
+        drawCenteredShadowed(buttonText, x + CARD_WIDTH / 2f, buttonY + 23f,
+            0.52f, Color.WHITE, 1f);
+    }
+
+    private String shortCoins(int value) {
+        if (value >= 1000 && value % 1000 == 0) return (value / 1000) + "K";
+        return String.format("%,d", value);
     }
 
     private void drawWallet(float rightX, float y) {
         int coins = GameSave.getCoins();
-        String text = formatCoins(coins);
-        font.getData().setScale(1.05f);
-        layout.setText(font, text);
-        float iconSize = 26f;
-        float contentWidth = iconSize + 10f + layout.width;
-        float x = rightX - contentWidth;
-        float boxX = x - 74f;
-        float boxW = contentWidth + 88f;
-        drawRect(boxX, y - 25f, boxW, 32f, new Color(0.24f, 0.13f, 0.055f, 0.96f));
-        drawCenteredShadowed("DESERT COINS", boxX + 40f, y - 4f, 0.52f, MUTED, 1f);
+        String text = String.format("%,d", coins);
 
+        font.getData().setScale(0.82f);
+        layout.setText(font, text);
+        float iconSize = 20f;
+        float contentWidth = iconSize + 7f + layout.width;
+        float x = rightX - contentWidth;
+
+        drawShadowText("DESERT COINS", x - 70f, y, 0.48f, MUTED, 1f);
         game.batch.setColor(Color.WHITE);
-        game.batch.draw(coinIcon, x, y - 20f, iconSize, iconSize);
-        font.getData().setScale(1.05f);
-        font.setColor(LIGHT_SAND);
-        font.draw(game.batch, text, x + iconSize + 10f, y);
-        font.setColor(Color.WHITE);
-        font.getData().setScale(1f);
+        game.batch.draw(coinIcon, x, y - 16f, iconSize, iconSize);
+        drawShadowText(text, x + iconSize + 7f, y, 0.82f, LIGHT_SAND, 1f);
     }
 
     private boolean insideButton(float px, float py, float cardX, float cardY) {
         float x = cardX + (CARD_WIDTH - BUTTON_WIDTH) / 2f;
-        float y = cardY + 24f;
+        float y = cardY + 20f;
         return px >= x && px <= x + BUTTON_WIDTH && py >= y && py <= y + BUTTON_HEIGHT;
     }
 
@@ -310,20 +363,19 @@ public class CharacterSelectScreen implements Screen {
                                       float scale, Color color, float shadowOffset) {
         font.getData().setScale(scale);
         layout.setText(font, text);
-
-        font.setColor(new Color(0f, 0f, 0f, 0.88f));
-        font.draw(game.batch, text, centerX - layout.width / 2f + shadowOffset,
-            baselineY - shadowOffset);
-
-        font.setColor(color);
-        font.draw(game.batch, text, centerX - layout.width / 2f, baselineY);
-
-        font.setColor(Color.WHITE);
-        font.getData().setScale(1f);
+        float x = centerX - layout.width / 2f;
+        drawShadowText(text, x, baselineY, scale, color, shadowOffset);
     }
 
-    private String formatCoins(int value) {
-        return String.format("%,d", value);
+    private void drawShadowText(String text, float x, float y,
+                                float scale, Color color, float shadowOffset) {
+        font.getData().setScale(scale);
+        font.setColor(0.08f, 0.035f, 0.015f, 0.95f);
+        font.draw(game.batch, text, x + shadowOffset, y - shadowOffset);
+        font.setColor(color);
+        font.draw(game.batch, text, x, y);
+        font.setColor(Color.WHITE);
+        font.getData().setScale(1f);
     }
 
     private void showMessage(String text) {
@@ -349,12 +401,20 @@ public class CharacterSelectScreen implements Screen {
         dispose();
     }
 
+    private void startSoldier() {
+        if (!GameSave.isSoldierUnlocked()) return;
+        game.setScreen(new GameScreen(game, new Soldier(200, 200)));
+        dispose();
+    }
+
     @Override public void show() {}
+
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
         backgroundCamera.setToOrtho(false, width, height);
     }
+
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
@@ -365,8 +425,10 @@ public class CharacterSelectScreen implements Screen {
         catSheet.dispose();
         dragonSheet.dispose();
         grimSheet.dispose();
+        soldierSheet.dispose();
         coinIcon.dispose();
         uiPixel.dispose();
         font.dispose();
     }
 }
+

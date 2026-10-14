@@ -4,103 +4,134 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import java.util.List;
+import java.util.Random;
 
 public class Mummy extends Monster {
-    private Texture spriteSheet;
-    private Animation<TextureRegion> spawnAnimation;
-    private Animation<TextureRegion> walkAnimation;
-    private Animation<TextureRegion> attackAnimation;
-    private float stateTime;
 
-    private enum State { SPAWNING, WALKING, ATTACKING }
+    private enum State {
+        SPAWNING,
+        WALKING
+    }
+
+    // Increased drawing size slightly for balanced proportions
+    private static final float DRAW_SIZE = 110f;
+    private static final float HALF_SIZE = DRAW_SIZE / 2f;
+
+    private static final float SPAWN_DURATION = 0.8f;
+
+    private static final float ATTACK_COOLDOWN = 1.0f;
+    private static final float ATTACK_RANGE = 55f;
+    private static final int ATTACK_DAMAGE = 12;
+
+    private final Texture spriteSheet;
+    private final Animation<TextureRegion> spawnAnimation;
+    private final Animation<TextureRegion> walkAnimation;
+
+    private float stateTime = 0f;
+    private float spawnStateTime = 0f;
+
+    private Player targetPlayer;
     private State currentState = State.SPAWNING;
-    private float spawnTimer = 0f;
-    private static final float SPAWN_DURATION = 1.05f; // เวลาช่วงโผล่จากดิน (เฟรม 1-7)
 
     public Mummy(float x, float y) {
-        super("Mummy", x, y, 60, 70f, "ไม่มีชื่อ 4.png");
-        spriteSheet = new Texture("ไม่มีชื่อ 4.png");
+        // Boss HP = 1000 as requested
+        super("Mummy", x, y, 1000, 50f, "Mummy.png");
 
-        int cols = 7; // 7 คอลัมน์
-        int frameWidth = spriteSheet.getWidth() / cols;
-        int frameHeight = spriteSheet.getHeight() / 2; // 2 แถว
-        TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
+        spriteSheet = new Texture("Mummy.png");
 
-        // เฟรม 1-7 (แถว 0: โผล่จากดิน)
-        TextureRegion[] spawnFrames = new TextureRegion[7];
-        System.arraycopy(tmp[0], 0, spawnFrames, 0, 7);
-        spawnAnimation = new Animation<>(0.15f, spawnFrames);
+        int columns = 8;
+        int rows = 2;
+        int frameWidth = spriteSheet.getWidth() / columns;
+        int frameHeight = spriteSheet.getHeight() / rows;
 
-        // เฟรม 8-11 (แถว 1 ช่อง 0-3: เดิน)
-        TextureRegion[] walkFrames = new TextureRegion[4];
-        System.arraycopy(tmp[1], 0, walkFrames, 0, 4);
-        walkAnimation = new Animation<>(0.15f, walkFrames);
+        TextureRegion[][] frames =
+            TextureRegion.split(spriteSheet, frameWidth, frameHeight);
 
-        // ส่วนที่เหลือ (แถว 1 ช่อง 4 เป็นต้นไป: โจมตี)
-        TextureRegion[] attackFrames = new TextureRegion[3];
-        System.arraycopy(tmp[1], 4, attackFrames, 0, 3);
-        attackAnimation = new Animation<>(0.15f, attackFrames);
+        // Top row (Red circled frames): Spawning animation emerging from the ground (using first 6 frames)
+        TextureRegion[] spawnFrames = new TextureRegion[6];
+        System.arraycopy(frames[0], 0, spawnFrames, 0, 6);
 
-        stateTime = 0f;
+        // Bottom row (Green circled frames): Continuous walking animation frames (using first 6 frames)
+        TextureRegion[] walkFrames = new TextureRegion[6];
+        System.arraycopy(frames[1], 0, walkFrames, 0, 6);
+
+        spawnAnimation = new Animation<>(0.12f, spawnFrames);
+        walkAnimation = new Animation<>(0.10f, walkFrames);
+
+        attackTimer = new Random().nextFloat();
     }
 
     @Override
     public void attack() {
-        System.out.println("Mummy melee attack!");
+        if (targetPlayer != null && targetPlayer.isAlive()) {
+            targetPlayer.takeDamage(ATTACK_DAMAGE);
+            System.out.println("Mummy attacks player for " + ATTACK_DAMAGE + " damage!");
+        }
     }
 
     @Override
     public void update(float delta, Player player, List<Item> worldItems) {
-        stateTime += delta;
         updatePoison(delta, worldItems);
+        targetPlayer = player;
 
         if (currentState == State.SPAWNING) {
-            spawnTimer += delta;
-            if (spawnTimer >= SPAWN_DURATION) {
+            spawnStateTime += delta;
+            if (spawnStateTime >= SPAWN_DURATION) {
                 currentState = State.WALKING;
             }
             return;
         }
 
-        float dx = player.getCenterX() - (this.x + 32f);
-        float dy = player.getCenterY() - (this.y + 32f);
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-
-        if (distance <= 45f) {
-            currentState = State.ATTACKING;
-            if (attackTimer <= 0f) {
-                attack();
-                player.takeDamage(12);
-                attackTimer = 1.0f;
-            }
-        } else {
-            currentState = State.WALKING;
-            this.x += (dx / distance) * speed * delta;
-            this.y += (dy / distance) * speed * delta;
-        }
+        stateTime += delta;
 
         if (attackTimer > 0f) {
             attackTimer -= delta;
         }
+
+        float dx = player.getCenterX() - (this.x + HALF_SIZE);
+        float dy = player.getCenterY() - (this.y + HALF_SIZE);
+
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= ATTACK_RANGE) {
+            if (attackTimer <= 0f) {
+                attack();
+                attackTimer = ATTACK_COOLDOWN;
+            }
+            return;
+        }
+
+        float targetX = player.getCenterX() - HALF_SIZE;
+        float targetY = player.getCenterY() - HALF_SIZE;
+
+        if (this.x < targetX) this.x += speed * delta;
+        if (this.x > targetX) this.x -= speed * delta;
+        if (this.y < targetY) this.y += speed * delta;
+        if (this.y > targetY) this.y -= speed * delta;
     }
 
     @Override
     public void draw(SpriteBatch batch) {
         TextureRegion currentFrame;
+
         if (currentState == State.SPAWNING) {
-            currentFrame = spawnAnimation.getKeyFrame(stateTime, false);
-        } else if (currentState == State.ATTACKING) {
-            currentFrame = attackAnimation.getKeyFrame(stateTime, true);
+            currentFrame = spawnAnimation.getKeyFrame(spawnStateTime, false);
         } else {
             currentFrame = walkAnimation.getKeyFrame(stateTime, true);
         }
-        batch.draw(currentFrame, x, y, 64, 64);
+
+        batch.draw(currentFrame, x, y, DRAW_SIZE, DRAW_SIZE);
+    }
+
+    public Rectangle getHitbox() {
+        return new Rectangle(this.x, this.y, DRAW_SIZE, DRAW_SIZE);
     }
 
     @Override
     public void dispose() {
         super.dispose();
-        if (spriteSheet != null) spriteSheet.dispose();
+        spriteSheet.dispose();
     }
 }

@@ -8,9 +8,12 @@ public final class GameSave {
     private static final String KEY_COINS = "walletCoins";
     private static final String KEY_DRAGON_UNLOCKED = "dragonUnlocked";
     private static final String KEY_GRIM_UNLOCKED = "grimUnlocked";
+    private static final String KEY_SOLDIER_UNLOCKED = "soldierUnlocked";
+
 
     public static final int DRAGON_COST = 10_000;
     public static final int GRIM_COST = 20_000;
+    public static final int SOLDIER_COST = 25_000;
 
     private GameSave() {
     }
@@ -27,6 +30,7 @@ public final class GameSave {
         if (amount <= 0) return;
         Preferences prefs = prefs();
         long next = (long) prefs.getInteger(KEY_COINS, 0) + amount;
+        // Preferences stores ints here; protect against overflow.
         int safeValue = (int) Math.min(Integer.MAX_VALUE, next);
         prefs.putInteger(KEY_COINS, safeValue);
         prefs.flush();
@@ -50,6 +54,11 @@ public final class GameSave {
         return prefs().getBoolean(KEY_GRIM_UNLOCKED, false);
     }
 
+    public static boolean isSoldierUnlocked() {
+        return prefs().getBoolean(KEY_SOLDIER_UNLOCKED, false);
+    }
+
+
     public static boolean buyDragon() {
         if (isDragonUnlocked()) return true;
         if (!spendCoins(DRAGON_COST)) return false;
@@ -67,4 +76,14 @@ public final class GameSave {
         prefs.flush();
         return true;
     }
+
+    public static boolean buySoldier() {
+        if (isSoldierUnlocked()) return true;
+        if (!spendCoins(SOLDIER_COST)) return false;
+        Preferences prefs = prefs();
+        prefs.putBoolean(KEY_SOLDIER_UNLOCKED, true);
+        prefs.flush();
+        return true;
+    }
+
 }

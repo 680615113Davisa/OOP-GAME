@@ -29,6 +29,7 @@ public class Grim extends Player {
 
     public void increaseAuraDamage() {
         this.auraDamage += 1;
+        System.out.println("Grim's Aura Damage increased! Current Damage: " + this.auraDamage);
     }
 
     @Override
@@ -49,6 +50,7 @@ public class Grim extends Player {
             for (Monster m : activeMonsters) {
                 if (isEnemyInRadius(m)) {
                     m.takeDamage(auraDamage);
+                    System.out.println("Grim's Aura hits " + m.name + " for " + auraDamage + " damage!");
                 }
             }
             damageTimer = 0f;

@@ -76,6 +76,7 @@ public class Dragon extends Player {
 
     @Override
     public void attack() {
+        System.out.println("Dragon breathes fire! (Cooldown 2s)");
     }
 
     @Override
@@ -95,8 +96,11 @@ public class Dragon extends Player {
             currentFrame.flip(true, false);
         }
 
-        batch.draw(currentFrame, x, y, 128, 128);
+        float drawWidth = 128;
+        float drawHeight = 128;
+        batch.draw(currentFrame, x, y, drawWidth, drawHeight);
     }
+
 
     @Override
     public void dispose() {
