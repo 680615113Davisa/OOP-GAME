@@ -39,6 +39,7 @@ public class PoisonPuddle {
     }
 
     public void dispose() {
-        texture.dispose();
+
     }
 }
+
